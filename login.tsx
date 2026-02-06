@@ -118,22 +118,22 @@ function EyeOffIcon({ className }: { className?: string }) {
 /*  Login Page                                                         */
 /* ------------------------------------------------------------------ */
 
-export default function LoginPage() {
+export default function LoginPage({ onLogin }: { onLogin: () => void }) {
   const [showPassword, setShowPassword] = React.useState(false);
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    // TODO: 비밀번호 인증 로직
+    onLogin();
   }
 
   function handleGoogleLogin() {
-    // TODO: Google OAuth 로직
+    onLogin();
   }
 
   function handleMicrosoftLogin() {
-    // TODO: Microsoft OAuth 로직
+    onLogin();
   }
 
   return (
