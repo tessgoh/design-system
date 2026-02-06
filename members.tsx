@@ -5,15 +5,9 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Badge } from "./ui/badge";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "./ui/card";
-import {
   Table,
   TableBody,
+  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -27,7 +21,7 @@ import {
   SelectValue,
 } from "./ui/select";
 import { Avatar, AvatarFallback } from "./ui/avatar";
-import { Search, LogOut } from "lucide-react";
+import { Search, LogOut, Users } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -85,156 +79,163 @@ export default function MembersPage({ onLogout }: { onLogout: () => void }) {
   });
 
   return (
-    <div className="min-h-screen bg-[var(--color-gray-25)]">
-      {/* Top Nav */}
-      <header className="border-b border-[var(--color-gray-200)] bg-white">
+    <div className="min-h-screen bg-background">
+      {/* ---- Top Nav ---- */}
+      <header className="border-b bg-card">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
           <div className="flex items-center gap-2">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-[var(--color-brand-500)]">
-              <svg className="size-4 text-white" viewBox="0 0 24 24" fill="none">
+            <div className="flex size-8 items-center justify-center rounded-lg bg-primary">
+              <svg className="size-4 text-primary-foreground" viewBox="0 0 24 24" fill="none">
                 <path d="M12 2L2 7l10 5 10-5-10-5Z" fill="currentColor" />
                 <path d="M2 17l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 <path d="M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
-            <span className="text-sm font-semibold text-[var(--color-gray-900)]">Admin Console</span>
+            <span className="text-sm font-semibold">Admin Console</span>
           </div>
-          <Button variant="ghost" size="sm" onClick={onLogout} className="gap-2 text-[var(--color-gray-600)]">
+          <Button variant="ghost" size="sm" onClick={onLogout} className="gap-2 text-muted-foreground">
             <LogOut className="size-4" />
             로그아웃
           </Button>
         </div>
       </header>
 
-      {/* Main Content */}
+      {/* ---- Main ---- */}
       <main className="mx-auto max-w-6xl px-6 py-8">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold text-[var(--color-gray-950)]">
-              멤버 목록
-            </CardTitle>
-            <CardDescription>
-              총 {filtered.length}명의 멤버
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            {/* Toolbar */}
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              {/* Left: Filters */}
-              <div className="flex items-center gap-2">
-                <Select value={roleFilter} onValueChange={setRoleFilter}>
-                  <SelectTrigger className="w-[130px]" size="sm">
-                    <SelectValue placeholder="역할" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">모든 역할</SelectItem>
-                    <SelectItem value="Admin">Admin</SelectItem>
-                    <SelectItem value="Member">Member</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-[130px]" size="sm">
-                    <SelectValue placeholder="상태" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">모든 상태</SelectItem>
-                    <SelectItem value="active">활성</SelectItem>
-                    <SelectItem value="inactive">비활성</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+        {/* Page Title */}
+        <div className="mb-6 flex items-center gap-3">
+          <div className="flex size-10 items-center justify-center rounded-lg bg-muted">
+            <Users className="size-5 text-muted-foreground" />
+          </div>
+          <div>
+            <h1 className="text-lg font-semibold">멤버 목록</h1>
+            <p className="text-sm text-muted-foreground">조직 멤버를 관리하세요.</p>
+          </div>
+        </div>
 
-              {/* Right: Search */}
-              <div className="relative w-full sm:w-64">
-                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--color-gray-400)]" />
-                <Input
-                  placeholder="이름, 이메일, 서비스 검색"
-                  className="pl-9 h-8 text-sm"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              </div>
+        {/* Card wrapping the toolbar + table */}
+        <div className="rounded-xl border bg-card">
+          {/* ---- Toolbar ---- */}
+          <div className="flex flex-col gap-3 border-b px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            {/* Left: Filters */}
+            <div className="flex items-center gap-2">
+              <Select value={roleFilter} onValueChange={setRoleFilter}>
+                <SelectTrigger className="w-[130px]" size="sm">
+                  <SelectValue placeholder="역할" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">모든 역할</SelectItem>
+                  <SelectItem value="Admin">Admin</SelectItem>
+                  <SelectItem value="Member">Member</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[130px]" size="sm">
+                  <SelectValue placeholder="상태" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">모든 상태</SelectItem>
+                  <SelectItem value="active">활성</SelectItem>
+                  <SelectItem value="inactive">비활성</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            {/* Table */}
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-[var(--color-gray-50)] hover:bg-[var(--color-gray-50)]">
-                  <TableHead>이름</TableHead>
-                  <TableHead>서비스</TableHead>
-                  <TableHead>상태</TableHead>
-                  <TableHead>역할</TableHead>
-                  <TableHead>최근 접속</TableHead>
-                  <TableHead>가입일</TableHead>
+            {/* Right: Search */}
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="이름, 이메일, 서비스 검색"
+                className="h-8 pl-9 text-sm"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* ---- Table ---- */}
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/50 hover:bg-muted/50">
+                <TableHead className="pl-4">이름</TableHead>
+                <TableHead>서비스</TableHead>
+                <TableHead>상태</TableHead>
+                <TableHead>역할</TableHead>
+                <TableHead>최근 접속</TableHead>
+                <TableHead>가입일</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filtered.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                    검색 결과가 없습니다.
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center text-[var(--color-gray-500)]">
-                      검색 결과가 없습니다.
+              ) : (
+                filtered.map((member) => (
+                  <TableRow key={member.id}>
+                    {/* Name + Email */}
+                    <TableCell className="pl-4">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="size-8">
+                          <AvatarFallback className="bg-primary/10 text-xs font-medium text-primary">
+                            {member.name.slice(0, 1)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium">{member.name}</span>
+                          <span className="text-xs text-muted-foreground">{member.email}</span>
+                        </div>
+                      </div>
+                    </TableCell>
+                    {/* Service */}
+                    <TableCell className="text-muted-foreground">
+                      {member.service}
+                    </TableCell>
+                    {/* Status */}
+                    <TableCell>
+                      {member.status === "active" ? (
+                        <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700 gap-1.5">
+                          <span className="inline-block size-1.5 rounded-full bg-emerald-500" />
+                          활성
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="border-border bg-muted text-muted-foreground gap-1.5">
+                          <span className="inline-block size-1.5 rounded-full bg-muted-foreground/50" />
+                          비활성
+                        </Badge>
+                      )}
+                    </TableCell>
+                    {/* Role */}
+                    <TableCell>
+                      {member.role === "Admin" ? (
+                        <Badge variant="outline" className="border-primary/30 text-primary">
+                          Admin
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline">
+                          Member
+                        </Badge>
+                      )}
+                    </TableCell>
+                    {/* Last Access */}
+                    <TableCell className="text-muted-foreground">
+                      {member.lastAccess}
+                    </TableCell>
+                    {/* Joined */}
+                    <TableCell className="text-muted-foreground">
+                      {member.joinedAt}
                     </TableCell>
                   </TableRow>
-                ) : (
-                  filtered.map((member) => (
-                    <TableRow key={member.id}>
-                      {/* Name + Email */}
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <Avatar className="size-8">
-                            <AvatarFallback className="text-xs font-medium bg-[var(--color-brand-50)] text-[var(--color-brand-700)]">
-                              {member.name.slice(0, 1)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex flex-col">
-                            <span className="text-sm font-medium text-[var(--color-gray-900)]">{member.name}</span>
-                            <span className="text-xs text-[var(--color-gray-500)]">{member.email}</span>
-                          </div>
-                        </div>
-                      </TableCell>
-                      {/* Service */}
-                      <TableCell className="text-sm text-[var(--color-gray-700)]">
-                        {member.service}
-                      </TableCell>
-                      {/* Status */}
-                      <TableCell>
-                        {member.status === "active" ? (
-                          <Badge className="bg-[var(--color-brand-50)] text-[var(--color-brand-700)] border-[var(--color-brand-200)]">
-                            <span className="mr-1 inline-block size-1.5 rounded-full bg-[var(--color-brand-500)]" />
-                            활성
-                          </Badge>
-                        ) : (
-                          <Badge variant="secondary" className="bg-[var(--color-gray-100)] text-[var(--color-gray-600)] border-[var(--color-gray-300)]">
-                            <span className="mr-1 inline-block size-1.5 rounded-full bg-[var(--color-gray-400)]" />
-                            비활성
-                          </Badge>
-                        )}
-                      </TableCell>
-                      {/* Role */}
-                      <TableCell>
-                        <Badge variant="outline" className={
-                          member.role === "Admin"
-                            ? "border-[var(--color-brand-200)] text-[var(--color-brand-700)]"
-                            : "text-[var(--color-gray-600)]"
-                        }>
-                          {member.role}
-                        </Badge>
-                      </TableCell>
-                      {/* Last Access */}
-                      <TableCell className="text-sm text-[var(--color-gray-600)]">
-                        {member.lastAccess}
-                      </TableCell>
-                      {/* Joined */}
-                      <TableCell className="text-sm text-[var(--color-gray-600)]">
-                        {member.joinedAt}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                ))
+              )}
+            </TableBody>
+            <TableCaption>
+              총 {filtered.length}명의 멤버가 표시되고 있습니다.
+            </TableCaption>
+          </Table>
+        </div>
       </main>
     </div>
   );
