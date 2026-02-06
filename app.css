@@ -58,6 +58,22 @@
   --color-input: var(--color-gray-300);
   --color-input-background: var(--color-white);
   --color-ring: var(--color-brand-500);
+  --color-popover: var(--color-white);
+  --color-popover-foreground: var(--color-gray-950);
+
+  /* Colors - Success */
+  --color-success-50: #E7FAEC;
+  --color-success-100: #C9FCD6;
+  --color-success-500: #00C781;
+  --color-success-600: #00AB7F;
+  --color-success-700: #008F79;
+
+  /* Colors - Warning */
+  --color-warning-50: #FFFCF5;
+  --color-warning-100: #FEF0C7;
+  --color-warning-500: #F79009;
+  --color-warning-600: #DC6803;
+  --color-warning-700: #B54708;
 }
 
 body {
