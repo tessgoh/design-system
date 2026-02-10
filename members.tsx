@@ -59,16 +59,23 @@ interface Member {
   service: string;
   status: "active" | "inactive" | "pending";
   role: "Admin" | "Member";
-  lastAccess: string; // ISO or "-"
-  joinedAt: string;   // ISO
+  lastAccess: string;
+  joinedAt: string;
 }
 
 type SortKey = "name" | "email" | "service" | "status" | "role" | "lastAccess" | "joinedAt";
 type SortDir = "asc" | "desc";
 
 /* ------------------------------------------------------------------ */
-/*  Mock Data                                                          */
+/*  Constants                                                          */
 /* ------------------------------------------------------------------ */
+
+/* Status badge style config — maps status to label + token-based colors */
+const STATUS_CONFIG = {
+  active:   { label: "활성",   className: "bg-success-50 text-success-700" },
+  inactive: { label: "비활성", className: "bg-gray-100 text-gray-600" },
+  pending:  { label: "대기",   className: "bg-warning-50 text-warning-700" },
+} as const;
 
 const MEMBERS: Member[] = [
   { id: 1, name: "홍길동", isMe: true, email: "alex.kim@letsur.ai", service: "Button CTA", status: "active", role: "Admin", lastAccess: "2026-02-10T11:48:00", joinedAt: "2025-12-18" },
@@ -115,16 +122,27 @@ function relativeTime(iso: string): string {
 
 function formatDate(iso: string): string {
   const d = new Date(iso);
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}.${m}.${day}`;
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
 }
 
 /* ------------------------------------------------------------------ */
-/*  Sortable Head                                                      */
+/*  Extracted Components                                               */
 /* ------------------------------------------------------------------ */
 
+/* Config-driven status pill badge — avoids repetitive switch/case */
+function StatusBadge({ status }: { status: Member["status"] }) {
+  const { label, className } = STATUS_CONFIG[status];
+  return (
+    <Badge
+      variant="secondary"
+      className={`rounded border-0 px-2 py-0.5 text-xs font-medium ${className}`}
+    >
+      {label}
+    </Badge>
+  );
+}
+
+/* Sortable column header with direction indicator and interaction states */
 function SortableHead({
   children,
   sortKey,
@@ -147,13 +165,17 @@ function SortableHead({
     <TableHead className={className}>
       <button
         type="button"
-        className="inline-flex items-center gap-1 text-gray-500 hover:text-foreground transition-colors"
+        className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground focus-visible:text-foreground active:text-foreground transition-colors outline-none"
         onClick={() => onSort(sortKey)}
       >
         {children}
         {extra}
         {active ? (
-          currentDir === "asc" ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />
+          currentDir === "asc" ? (
+            <ArrowUp className="size-3" />
+          ) : (
+            <ArrowDown className="size-3" />
+          )
         ) : (
           <ArrowUpDown className="size-3 opacity-40" />
         )}
@@ -162,31 +184,59 @@ function SortableHead({
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*  Status Badge                                                       */
-/* ------------------------------------------------------------------ */
+/* Role dropdown — extracted from table row for reuse */
+function RoleSelect({
+  value,
+  onValueChange,
+}: {
+  value: string;
+  onValueChange: (v: "Admin" | "Member") => void;
+}) {
+  return (
+    <Select value={value} onValueChange={(v) => onValueChange(v as "Admin" | "Member")}>
+      <SelectTrigger className="h-8 w-[130px] rounded-lg border-input text-sm gap-2">
+        <UserRound className="size-4 text-gray-400" />
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="Admin">Admin</SelectItem>
+        <SelectItem value="Member">Member</SelectItem>
+      </SelectContent>
+    </Select>
+  );
+}
 
-function StatusBadge({ status }: { status: Member["status"] }) {
-  switch (status) {
-    case "active":
-      return (
-        <Badge variant="secondary" className="rounded bg-success-50 text-success-700 border-0 px-2 py-0.5 text-xs font-medium">
-          활성
-        </Badge>
-      );
-    case "inactive":
-      return (
-        <Badge variant="secondary" className="rounded bg-gray-100 text-gray-600 border-0 px-2 py-0.5 text-xs font-medium">
-          비활성
-        </Badge>
-      );
-    case "pending":
-      return (
-        <Badge variant="secondary" className="rounded bg-warning-50 text-warning-700 border-0 px-2 py-0.5 text-xs font-medium">
-          대기
-        </Badge>
-      );
-  }
+/* Row action menu — extracted for readability */
+function MoreMenu() {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-8 text-muted-foreground hover:text-foreground"
+        >
+          <MoreVertical className="size-4" />
+          <span className="sr-only">더보기</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem>
+          <UserCog className="size-4" />
+          프로필 보기
+        </DropdownMenuItem>
+        <DropdownMenuItem>
+          <Mail className="size-4" />
+          메일 보내기
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem variant="destructive">
+          <Ban className="size-4" />
+          비활성화
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 }
 
 /* ------------------------------------------------------------------ */
@@ -229,219 +279,207 @@ export default function MembersPage({ onLogout }: { onLogout: () => void }) {
   const safePage = Math.min(page, totalPages);
   const paged = sorted.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
-  React.useEffect(() => { setPage(1); }, [roleFilter, statusFilter, search]);
+  React.useEffect(() => {
+    setPage(1);
+  }, [roleFilter, statusFilter, search]);
 
   function handleSort(key: SortKey) {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    else { setSortKey(key); setSortDir("asc"); }
+    else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
   }
 
   function handleRoleChange(id: number, role: "Admin" | "Member") {
     setMembers((prev) => prev.map((m) => (m.id === id ? { ...m, role } : m)));
   }
 
+  /* Shared props for sortable headers */
+  const sortHeadProps = { currentSort: sortKey, currentDir: sortDir, onSort: handleSort };
+  const headCls = "text-xs text-muted-foreground font-medium";
+
   return (
-    <div className="min-h-screen bg-white px-8 py-6">
-      {/* ---- Toolbar ---- */}
-      <div className="flex items-center justify-between gap-4 pb-4">
-        {/* Left: Filters */}
-        <div className="flex items-center gap-3">
-          <Select value={roleFilter} onValueChange={setRoleFilter}>
-            <SelectTrigger className="w-[120px] h-9 rounded-lg border-gray-300 text-sm text-gray-700">
-              <SelectValue placeholder="역할" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">역할</SelectItem>
-              <SelectItem value="Admin">Admin</SelectItem>
-              <SelectItem value="Member">Member</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[120px] h-9 rounded-lg border-gray-300 text-sm text-gray-700">
-              <SelectValue placeholder="상태" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">상태</SelectItem>
-              <SelectItem value="active">활성</SelectItem>
-              <SelectItem value="inactive">비활성</SelectItem>
-              <SelectItem value="pending">대기</SelectItem>
-            </SelectContent>
-          </Select>
+    /* Section → Container layout hierarchy */
+    <section className="min-h-screen bg-background">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        {/* ---- Toolbar: responsive row → stacked on mobile ---- */}
+        <div className="flex flex-col gap-3 pb-4 sm:flex-row sm:items-center sm:justify-between">
+          {/* Filter group */}
+          <div className="flex items-center gap-3">
+            <Select value={roleFilter} onValueChange={setRoleFilter}>
+              <SelectTrigger className="w-[120px] h-9 rounded-lg border-input text-sm text-gray-700">
+                <SelectValue placeholder="역할" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">역할</SelectItem>
+                <SelectItem value="Admin">Admin</SelectItem>
+                <SelectItem value="Member">Member</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[120px] h-9 rounded-lg border-input text-sm text-gray-700">
+                <SelectValue placeholder="상태" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">상태</SelectItem>
+                <SelectItem value="active">활성</SelectItem>
+                <SelectItem value="inactive">비활성</SelectItem>
+                <SelectItem value="pending">대기</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Search — full-width on mobile, fixed on sm+ */}
+          <div className="relative w-full sm:w-72">
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-400" />
+            <Input
+              placeholder="이름 또는 이메일"
+              className="h-9 rounded-lg border-input pl-9 text-sm"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
         </div>
 
-        {/* Right: Search */}
-        <div className="relative w-72">
-          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-400" />
-          <Input
-            placeholder="이름 또는 이메일"
-            className="h-9 rounded-lg border-gray-300 pl-9 text-sm"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-      </div>
-
-      {/* ---- Table ---- */}
-      <Table>
-        <TableHeader>
-          <TableRow className="bg-gray-50 hover:bg-gray-50 border-b border-gray-200">
-            <SortableHead sortKey="name" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className="pl-4 text-xs text-gray-500 font-medium">
-              이름
-            </SortableHead>
-            <SortableHead sortKey="email" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className="text-xs text-gray-500 font-medium">
-              이메일
-            </SortableHead>
-            <SortableHead sortKey="service" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className="text-xs text-gray-500 font-medium">
-              서비스
-            </SortableHead>
-            <SortableHead sortKey="status" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className="text-xs text-gray-500 font-medium">
-              상태
-            </SortableHead>
-            <SortableHead
-              sortKey="role"
-              currentSort={sortKey}
-              currentDir={sortDir}
-              onSort={handleSort}
-              className="text-xs text-gray-500 font-medium"
-              extra={<CircleHelp className="size-3 text-gray-400" />}
-            >
-              역할
-            </SortableHead>
-            <SortableHead sortKey="lastAccess" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className="text-xs text-gray-500 font-medium">
-              최근 접속
-            </SortableHead>
-            <SortableHead sortKey="joinedAt" currentSort={sortKey} currentDir={sortDir} onSort={handleSort} className="text-xs text-gray-500 font-medium">
-              가입일
-            </SortableHead>
-            <TableHead className="w-8" />
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {paged.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={8} className="h-32 text-center text-gray-500">
-                검색 결과가 없습니다.
-              </TableCell>
+        {/* ---- Table: responsive columns hidden at breakpoints ---- */}
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-gray-50 hover:bg-gray-50 border-b border-border">
+              <SortableHead sortKey="name" {...sortHeadProps} className={`pl-4 ${headCls}`}>
+                이름
+              </SortableHead>
+              <SortableHead sortKey="email" {...sortHeadProps} className={`hidden sm:table-cell ${headCls}`}>
+                이메일
+              </SortableHead>
+              <SortableHead sortKey="service" {...sortHeadProps} className={`hidden md:table-cell ${headCls}`}>
+                서비스
+              </SortableHead>
+              <SortableHead sortKey="status" {...sortHeadProps} className={headCls}>
+                상태
+              </SortableHead>
+              <SortableHead
+                sortKey="role"
+                {...sortHeadProps}
+                className={`hidden md:table-cell ${headCls}`}
+                extra={<CircleHelp className="size-3 text-gray-400" />}
+              >
+                역할
+              </SortableHead>
+              <SortableHead sortKey="lastAccess" {...sortHeadProps} className={`hidden lg:table-cell ${headCls}`}>
+                최근 접속
+              </SortableHead>
+              <SortableHead sortKey="joinedAt" {...sortHeadProps} className={`hidden lg:table-cell ${headCls}`}>
+                가입일
+              </SortableHead>
+              <TableHead className="w-8" />
             </TableRow>
-          ) : (
-            paged.map((member) => (
-              <TableRow key={member.id} className="border-b border-gray-100 hover:bg-gray-25">
-                {/* Name */}
-                <TableCell className="pl-4 py-4">
-                  {member.isMe ? (
-                    <span className="text-sm font-semibold text-gray-900 underline underline-offset-2">
-                      {member.name}(나)
-                    </span>
-                  ) : (
-                    <span className="text-sm font-semibold text-gray-900">
-                      {member.name}
-                    </span>
-                  )}
-                </TableCell>
-                {/* Email */}
-                <TableCell className="py-4 text-sm text-gray-600">
-                  {member.email}
-                </TableCell>
-                {/* Service */}
-                <TableCell className="py-4">
-                  <span className="text-sm font-medium text-brand-600 cursor-pointer hover:text-brand-700">
-                    {member.service}
-                  </span>
-                </TableCell>
-                {/* Status */}
-                <TableCell className="py-4">
-                  <StatusBadge status={member.status} />
-                </TableCell>
-                {/* Role */}
-                <TableCell className="py-4">
-                  <Select
-                    value={member.role}
-                    onValueChange={(v) => handleRoleChange(member.id, v as "Admin" | "Member")}
-                  >
-                    <SelectTrigger className="h-8 w-[130px] rounded-lg border-gray-300 text-sm gap-2">
-                      <UserRound className="size-4 text-gray-400" />
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Admin">Admin</SelectItem>
-                      <SelectItem value="Member">Member</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </TableCell>
-                {/* Last Access */}
-                <TableCell className="py-4 text-sm text-gray-600">
-                  {relativeTime(member.lastAccess)}
-                </TableCell>
-                {/* Joined */}
-                <TableCell className="py-4 text-sm text-gray-600">
-                  {formatDate(member.joinedAt)}
-                </TableCell>
-                {/* More */}
-                <TableCell className="py-4">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="size-8 text-gray-400 hover:text-gray-600">
-                        <MoreVertical className="size-4" />
-                        <span className="sr-only">더보기</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem>
-                        <UserCog className="size-4" />
-                        프로필 보기
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Mail className="size-4" />
-                        메일 보내기
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem variant="destructive">
-                        <Ban className="size-4" />
-                        비활성화
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+          </TableHeader>
+          <TableBody>
+            {paged.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
+                  검색 결과가 없습니다.
                 </TableCell>
               </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
+            ) : (
+              paged.map((member) => (
+                <TableRow key={member.id} className="border-b border-gray-100 hover:bg-gray-25">
+                  {/* Name */}
+                  <TableCell className="pl-4 py-4">
+                    {member.isMe ? (
+                      <span className="text-sm font-semibold text-secondary-foreground underline underline-offset-2">
+                        {member.name}(나)
+                      </span>
+                    ) : (
+                      <span className="text-sm font-semibold text-secondary-foreground">
+                        {member.name}
+                      </span>
+                    )}
+                  </TableCell>
+                  {/* Email — hidden on mobile */}
+                  <TableCell className="hidden sm:table-cell py-4 text-sm text-gray-600">
+                    {member.email}
+                  </TableCell>
+                  {/* Service — hidden below md */}
+                  <TableCell className="hidden md:table-cell py-4">
+                    <span className="text-sm font-medium text-brand-600 cursor-pointer hover:text-brand-700 transition-colors">
+                      {member.service}
+                    </span>
+                  </TableCell>
+                  {/* Status */}
+                  <TableCell className="py-4">
+                    <StatusBadge status={member.status} />
+                  </TableCell>
+                  {/* Role — hidden below md */}
+                  <TableCell className="hidden md:table-cell py-4">
+                    <RoleSelect
+                      value={member.role}
+                      onValueChange={(v) => handleRoleChange(member.id, v)}
+                    />
+                  </TableCell>
+                  {/* Last Access — hidden below lg */}
+                  <TableCell className="hidden lg:table-cell py-4 text-sm text-gray-600">
+                    {relativeTime(member.lastAccess)}
+                  </TableCell>
+                  {/* Joined — hidden below lg */}
+                  <TableCell className="hidden lg:table-cell py-4 text-sm text-gray-600">
+                    {formatDate(member.joinedAt)}
+                  </TableCell>
+                  {/* More */}
+                  <TableCell className="py-4">
+                    <MoreMenu />
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
 
-      {/* ---- Pagination ---- */}
-      {totalPages > 1 && (
-        <div className="pt-4">
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious
-                  href="#"
-                  onClick={(e) => { e.preventDefault(); setPage((p) => Math.max(1, p - 1)); }}
-                  className={safePage <= 1 ? "pointer-events-none opacity-50" : ""}
-                />
-              </PaginationItem>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                <PaginationItem key={p}>
-                  <PaginationLink
+        {/* ---- Pagination ---- */}
+        {totalPages > 1 && (
+          <div className="pt-4">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
                     href="#"
-                    isActive={p === safePage}
-                    onClick={(e) => { e.preventDefault(); setPage(p); }}
-                  >
-                    {p}
-                  </PaginationLink>
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setPage((p) => Math.max(1, p - 1));
+                    }}
+                    className={safePage <= 1 ? "pointer-events-none opacity-50" : ""}
+                  />
                 </PaginationItem>
-              ))}
-              <PaginationItem>
-                <PaginationNext
-                  href="#"
-                  onClick={(e) => { e.preventDefault(); setPage((p) => Math.min(totalPages, p + 1)); }}
-                  className={safePage >= totalPages ? "pointer-events-none opacity-50" : ""}
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        </div>
-      )}
-    </div>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                  <PaginationItem key={p}>
+                    <PaginationLink
+                      href="#"
+                      isActive={p === safePage}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setPage(p);
+                      }}
+                    >
+                      {p}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setPage((p) => Math.min(totalPages, p + 1));
+                    }}
+                    className={safePage >= totalPages ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
+      </div>
+    </section>
   );
 }

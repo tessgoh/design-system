@@ -137,17 +137,18 @@ export default function LoginPage({ onLogin }: { onLogin: () => void }) {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[var(--color-gray-25)] p-4">
-      <Card className="w-full max-w-[400px] shadow-xl border-[var(--color-gray-100)]">
+    /* Section: full-screen centered layout */
+    <section className="flex min-h-screen items-center justify-center bg-gray-25 p-4">
+      <Card className="w-full max-w-[400px] shadow-xl border-gray-100">
         {/* ---- Header ---- */}
         <CardHeader className="items-center text-center">
-          <div className="mb-4 flex size-12 items-center justify-center rounded-xl bg-[var(--color-brand-500)]">
-            <LogoIcon className="size-6 text-white" />
+          <div className="mb-4 flex size-12 items-center justify-center rounded-xl bg-primary">
+            <LogoIcon className="size-6 text-primary-foreground" />
           </div>
-          <CardTitle className="text-2xl font-semibold tracking-tight text-[var(--color-gray-950)]">
+          <CardTitle className="text-2xl font-semibold tracking-tight text-foreground">
             로그인
           </CardTitle>
-          <CardDescription className="text-sm text-[var(--color-gray-600)]">
+          <CardDescription className="text-sm text-gray-600">
             계정에 로그인하여 서비스를 이용하세요.
           </CardDescription>
         </CardHeader>
@@ -180,7 +181,7 @@ export default function LoginPage({ onLogin }: { onLogin: () => void }) {
           {/* ---- Divider ---- */}
           <div className="flex items-center gap-3">
             <Separator className="flex-1" />
-            <span className="text-xs text-[var(--color-gray-500)]">또는</span>
+            <span className="text-xs text-muted-foreground">또는</span>
             <Separator className="flex-1" />
           </div>
 
@@ -206,7 +207,7 @@ export default function LoginPage({ onLogin }: { onLogin: () => void }) {
                 <Label htmlFor="password">비밀번호</Label>
                 <a
                   href="#"
-                  className="text-sm font-medium text-[var(--color-brand-600)] hover:text-[var(--color-brand-700)] transition-colors"
+                  className="text-sm font-medium text-brand-600 hover:text-brand-700 focus-visible:text-brand-700 transition-colors outline-none focus-visible:underline"
                 >
                   비밀번호 찾기
                 </a>
@@ -224,7 +225,7 @@ export default function LoginPage({ onLogin }: { onLogin: () => void }) {
                 />
                 <button
                   type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-gray-500)] hover:text-[var(--color-gray-700)] transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus-visible:text-foreground transition-colors outline-none"
                   onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? "비밀번호 숨기기" : "비밀번호 표시"}
                 >
@@ -241,7 +242,7 @@ export default function LoginPage({ onLogin }: { onLogin: () => void }) {
             <Button
               type="submit"
               size="lg"
-              className="w-full bg-[var(--color-brand-500)] hover:bg-[var(--color-brand-600)] active:bg-[var(--color-brand-700)] text-white font-semibold"
+              className="w-full bg-primary hover:bg-brand-600 active:bg-brand-700 text-primary-foreground font-semibold"
             >
               로그인
             </Button>
@@ -250,17 +251,17 @@ export default function LoginPage({ onLogin }: { onLogin: () => void }) {
 
         {/* ---- Footer ---- */}
         <CardFooter className="justify-center">
-          <p className="text-sm text-[var(--color-gray-600)]">
+          <p className="text-sm text-gray-600">
             계정이 없으신가요?{" "}
             <a
               href="#"
-              className="font-semibold text-[var(--color-brand-600)] hover:text-[var(--color-brand-700)] transition-colors"
+              className="font-semibold text-brand-600 hover:text-brand-700 focus-visible:text-brand-700 transition-colors outline-none focus-visible:underline"
             >
               회원가입
             </a>
           </p>
         </CardFooter>
       </Card>
-    </div>
+    </section>
   );
 }
